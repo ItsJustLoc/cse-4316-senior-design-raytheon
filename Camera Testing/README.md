@@ -72,7 +72,9 @@ sudo i2cset -y 10 0x24 0x24 0x12 #Camera 1
 sudo i2cset -y 10 0x24 0x24 0x22 #Camera 2
 sudo i2cset -y 10 0x24 0x24 0x32 #Camera 3
 ```
-This can either be done prior to opening the camera feed or while it is open.
+The `10` component is the i2c bus of the multiplexing board. Per ArduCAM's documentation, this value can either be `9` or `10`, however the board we are using runs on i2c bus `10`.
+
+These commands can either be run prior to opening the camera feed or while it is open.
 
 To switch the multiplexing board back to 4 Camera display, run:
 ```
