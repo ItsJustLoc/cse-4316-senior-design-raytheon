@@ -125,6 +125,28 @@ class ParserTests(unittest.TestCase):
                 })
                 self.assertEqual(self.parser.parse(text).interpretation.status, "ready")
 
+    def test_explicit_stop_and_target_designations_do_not_depend_on_inference(self):
+        for text, action, color in (
+            ("Stop the mission.", "stop", None),
+            ("cancel the mission!", "stop", None),
+            ("The black cube.", "retrieve", "black"),
+            ("orange", "retrieve", "orange"),
+        ):
+            with self.subTest(text=text):
+                result = self.parser.parse(text).interpretation
+                self.assertEqual(result.status, "ready")
+                self.assertEqual(result.mission.action, action)
+                self.assertEqual(result.mission.target.color if result.mission.target else None, color)
+        self.assertEqual(self.stub.requests, [])
+
+    def test_known_spatial_qualifiers_cannot_be_silently_dropped(self):
+        for qualifier in ("next to the red cone", "behind the green cube", "nearest the start"):
+            with self.subTest(qualifier=qualifier):
+                result = self.parser.parse(f"Retrieve the blue box {qualifier}.").interpretation
+                self.assertEqual(result.status, "rejected")
+                self.assertIsNone(result.mission)
+        self.assertEqual(self.stub.requests, [])
+
     def test_empty_invalid_and_oversize_inputs_do_not_call_the_model(self):
         for value in ("", "  \n", "x" * 4001, None, 42):
             with self.subTest(value=repr(value)[:30]), self.assertRaises(NLPError) as error:

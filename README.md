@@ -36,3 +36,9 @@ Hooks check staged changes for secrets, private keys, merge conflicts, and inval
 GitHub Actions also scans Git history with Gitleaks and checks PR commits and titles.
 GitHub secret scanning and push protection are enabled.
 Keep credentials in ignored `.env` files; if a real secret leaks, revoke or rotate it immediately.
+
+## Leader's Intent NLP
+
+The [NLP module](nlp/README.md) provides a browser input screen, Python API, and CLI backed by a configurable local Ollama model.
+It produces validated mission proposals for retrieval, NFC reading, return-to-start, and mission stop, with explicit context for target changes.
+See the module guide for laptop/Jetson setup, the JSON contract, and deterministic and live-model tests.

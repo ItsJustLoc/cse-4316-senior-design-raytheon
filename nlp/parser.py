@@ -2,11 +2,12 @@
 
 import json
 import re
+from typing import get_args
 
 from pydantic import ValidationError
 
 from nlp.client import NLPError, OllamaConfig, chat
-from nlp.models import RESPONSE_ADAPTER, Interpretation, Mission, ParsedIntent
+from nlp.models import RESPONSE_ADAPTER, Interpretation, Mission, ParsedIntent, Target
 
 SYSTEM_PROMPT = """You translate Mission Bird Dog instructions into proposed missions.
 Return ONLY JSON matching the schema. Never execute anything or claim completion.
@@ -66,6 +67,29 @@ Schema:
 """
 
 
+def explicit_interpretation(text: str, current: Mission | None) -> Interpretation | None:
+    """Keep literal commands and known unsupported qualifiers deterministic."""
+    normalized = text.strip().casefold().rstrip(".!")
+    if re.search(r"\b(next\s+to|left\s+of|right\s+of|behind|in\s+front\s+of|near|nearest|closest|farthest)\b", normalized):
+        return Interpretation(status="rejected", mission=None,
+                              message="Spatial target or route qualifiers are not supported. Specify the target without a location constraint.")
+    if normalized in ("stop", "stop the mission", "cancel the mission"):
+        return Interpretation(status="ready", mission=Mission(action="stop", target=None),
+                              message="Propose stopping the mission.")
+    designation = re.fullmatch(r"(?:the\s+)?(\w+)(?:\s+(cube|box|ball|object))?", normalized)
+    if designation:
+        color, kind = designation.groups()
+        color = "gray" if color == "grey" else color
+        if color in get_args(Target.model_fields["color"].annotation):
+            action = current.action if current and current.target else "retrieve"
+            kind = kind or (current.target.object_type if current and current.target else "object")
+            mission = Mission(action=action, target=Target(color=color, object_type=kind))
+            verb = "reading NFC from" if action == "read_nfc" else "retrieving"
+            return Interpretation(status="ready", mission=mission,
+                                  message=f"Propose {verb} the {color} {kind}.")
+    return None
+
+
 class IntentParser:
     def __init__(self, config: OllamaConfig):
         self.config = config
@@ -75,6 +99,9 @@ class IntentParser:
             raise NLPError("invalid_input", "Intent must contain 1 to 4000 characters of nonblank text.")
         if current_mission is not None and not isinstance(current_mission, Mission):
             raise NLPError("invalid_input", "current_mission must be a validated Mission or None.")
+        explicit = explicit_interpretation(text, current_mission)
+        if explicit is not None:
+            return ParsedIntent(original_text=text, interpretation=explicit)
         schema = RESPONSE_ADAPTER.json_schema()
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT + json.dumps(schema)},
