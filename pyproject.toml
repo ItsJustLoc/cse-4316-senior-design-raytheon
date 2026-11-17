@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bird-dog-nlp"
+version = "0.1.0"
+description = "Hardware-independent Leader's Intent parsing through local Ollama"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2.12,<3"]
+
+[tool.setuptools]
+packages = ["nlp"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+nlp = ["web/*.html", "web/*.css", "web/*.js"]

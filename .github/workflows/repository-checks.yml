@@ -25,7 +25,9 @@ jobs:
           python-version: '3.13'
       - name: Install pre-commit
         run: python -m pip install pre-commit==4.7.0
-      - name: Test commit-message validation
+      - name: Install NLP package
+        run: python -m pip install .
+      - name: Test repository and NLP behavior
         run: python -m unittest discover -s tests -v
       - name: Check files and staged secrets
         run: pre-commit run --all-files
