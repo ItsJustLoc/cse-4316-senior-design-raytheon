@@ -24,7 +24,7 @@ class CLITests(unittest.TestCase):
         environment.update(env)
         return subprocess.run(
             [sys.executable, "-m", "nlp", *args], input=input,
-            capture_output=True, text=True, env=environment, timeout=10,
+            capture_output=True, text=True, env=environment, timeout=10, check=False,
         )
 
     def test_parse_uses_environment_and_prints_only_json(self):

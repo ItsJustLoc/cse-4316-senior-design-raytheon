@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leader's Intent · Mission Bird Dog</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header><span class="brand">MISSION BIRD DOG</span><span class="mode">Intent workspace</span></header>
+  <main>
+    <div class="intro"><p class="eyebrow">HUMAN → MISSION</p><h1>Leader's Intent</h1>
+      <p>Describe the objective. Review the mission your system understands.</p></div>
+    <div class="workspace">
+      <section aria-labelledby="input-title">
+        <h2 id="input-title"><span class="step">01</span> Give an instruction</h2>
+        <form id="intent-form">
+          <fieldset id="inputs">
+            <label for="intent">Mission objective</label>
+            <textarea id="intent" name="intent" rows="7" maxlength="4000" required
+              aria-describedby="input-hint" placeholder="Retrieve the blue box and bring it back to the starting zone."></textarea>
+            <p class="hint" id="input-hint">Include one target color. You can also request an NFC read, return to start, or mission stop.</p>
+            <div class="examples" aria-label="Example instructions">
+              <button type="button" data-example="Retrieve the blue box and bring it back to the starting zone.">Retrieve a target</button>
+              <button type="button" data-example="Read the NFC message from the yellow cube without collecting it.">Read NFC</button>
+            </div>
+            <div class="context"><div><h3>Follow-up context</h3><p id="context-text">No previous mission selected.</p></div>
+              <button type="button" id="clear-context" class="text-button" hidden>Clear</button></div>
+            <button type="submit" id="submit" class="primary">Interpret intent <span aria-hidden="true">→</span></button>
+          </fieldset>
+        </form>
+      </section>
+      <section aria-labelledby="result-title" class="result-panel">
+        <h2 id="result-title"><span class="step">02</span> Review the interpretation</h2>
+        <div id="status" class="status" role="status" aria-live="polite">Awaiting instruction</div>
+        <p id="message">Your proposed mission will appear here. Nothing is sent to a vehicle.</p>
+        <dl id="mission-summary" hidden><div><dt>Action</dt><dd id="action"></dd></div>
+          <div><dt>Target</dt><dd id="target"></dd></div></dl>
+        <button type="button" id="use-context" class="secondary" hidden>Use this mission as context</button>
+        <details id="json-details" hidden><summary>Structured result</summary><pre id="json"></pre></details>
+      </section>
+    </div>
+    <footer>Interpretations are proposals. Map checks and vehicle execution belong to the mission controller.
+      A mission stop here does not replace the vehicle's emergency override.</footer>
+  </main>
+</body>
+</html>

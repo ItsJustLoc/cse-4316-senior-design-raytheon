@@ -11,3 +11,7 @@ dependencies = ["pydantic>=2.12,<3"]
 
 [tool.setuptools]
 packages = ["nlp"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+nlp = ["web/*.html", "web/*.css", "web/*.js"]
