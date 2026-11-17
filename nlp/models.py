@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 
 
 class StrictModel(BaseModel):
@@ -54,3 +61,28 @@ class ParsedIntent(StrictModel):
     schema_version: Literal[1] = 1
     original_text: str
     interpretation: Interpretation
+
+
+# Encode the cross-field rules in Ollama's generation schema as well as checking
+# them at runtime. Otherwise the sampler can generate retrieve + target: null.
+class TargetedMission(Mission):
+    action: Literal["retrieve", "read_nfc"]
+    target: Target
+
+
+class UntargetedMission(Mission):
+    action: Literal["return_to_start", "stop"]
+    target: None
+
+
+class ReadyInterpretation(Interpretation):
+    status: Literal["ready"]
+    mission: TargetedMission | UntargetedMission
+
+
+class UnreadyInterpretation(Interpretation):
+    status: Literal["clarification_required", "rejected"]
+    mission: None
+
+
+RESPONSE_ADAPTER = TypeAdapter(ReadyInterpretation | UnreadyInterpretation)

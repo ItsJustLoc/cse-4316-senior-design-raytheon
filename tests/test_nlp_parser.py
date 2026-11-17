@@ -11,7 +11,6 @@ from nlp.client import NLPError, OllamaConfig
 from nlp.models import Mission, Target
 from nlp.parser import IntentParser
 
-
 READY = {
     "status": "ready",
     "mission": {"action": "retrieve", "target": {"color": "blue", "object_type": "box"}},
@@ -82,7 +81,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(path, "/api/chat")
         self.assertEqual(request["model"], "test-model")
         self.assertIs(request["stream"], False)
-        self.assertEqual(request["format"]["type"], "object")
+        self.assertEqual(len(request["format"]["anyOf"]), 2)
         self.assertEqual(request["options"]["temperature"], 0)
         self.assertEqual(request["messages"][-1]["role"], "user")
         self.assertEqual(json.loads(request["messages"][-1]["content"])["text"], text)
@@ -107,6 +106,24 @@ class ParserTests(unittest.TestCase):
                 result = self.parser.parse("Retrieve something.")
                 self.assertEqual(result.interpretation.status, status)
                 self.assertIsNone(result.interpretation.mission)
+
+    def test_model_cannot_invent_a_target_color_or_shape(self):
+        for text in ("Retrieve the teal box.", "Retrieve the blue object."):
+            with self.subTest(text=text):
+                result = self.parser.parse(text)
+                self.assertEqual(result.interpretation.status, "rejected")
+                self.assertIsNone(result.interpretation.mission)
+
+    def test_gray_alias_and_generic_object_are_grounded(self):
+        for text, target in (
+            ("Retrieve the grey box.", {"color": "gray", "object_type": "box"}),
+            ("Retrieve blue.", {"color": "blue", "object_type": "object"}),
+        ):
+            with self.subTest(text=text):
+                self.stub.response = self.stub.chat_response({
+                    **READY, "mission": {"action": "retrieve", "target": target},
+                })
+                self.assertEqual(self.parser.parse(text).interpretation.status, "ready")
 
     def test_empty_invalid_and_oversize_inputs_do_not_call_the_model(self):
         for value in ("", "  \n", "x" * 4001, None, 42):
@@ -145,9 +162,8 @@ class ParserTests(unittest.TestCase):
     def test_connection_failure_and_timeout_are_errors(self):
         for exception in (URLError("connection refused"), TimeoutError("timed out")):
             with self.subTest(exception=exception):
-                with patch("nlp.client.urlopen", side_effect=exception):
-                    with self.assertRaises(NLPError) as error:
-                        self.parser.parse("Retrieve the blue box.")
+                with patch("nlp.client.urlopen", side_effect=exception), self.assertRaises(NLPError) as error:
+                    self.parser.parse("Retrieve the blue box.")
                 self.assertEqual(error.exception.code, "backend_unavailable")
 
 
